@@ -2,30 +2,26 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube ストレージ転送機</title>
     <style>
-        body { font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f0f2f5; }
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f0f2f5; }
         .card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
         h1 { color: #ff0000; font-size: 22px; margin-bottom: 25px; }
-        input { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 12px; margin-bottom: 20px; box-sizing: border-box; font-size: 16px; outline: none; }
-        input:focus { border-color: #ff0000; }
-        button { width: 100%; padding: 15px; background: #ff0000; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        
-        /* ロードバーのデザイン */
+        input { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 12px; margin-bottom: 20px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #ff0000; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        button:disabled { background: #ccc; }
         #progressContainer { display: none; margin-top: 30px; }
         #progressBar { width: 100%; background: #f0f0f0; border-radius: 10px; height: 12px; overflow: hidden; }
-        #progressFill { width: 0%; height: 100%; background: linear-gradient(90deg, #ff0000, #ff6b6b); transition: width 0.4s ease; }
-        #status { margin-top: 12px; font-size: 14px; color: #666; font-weight: 500; }
+        #progressFill { width: 0%; height: 100%; background: #ff0000; transition: width 0.5s; }
+        #status { margin-top: 12px; font-size: 14px; color: #666; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h1>YouTube 抽出ツール</h1>
+    <h1>YouTube 抽出</h1>
     <input type="text" id="urlInput" placeholder="動画のURLを貼り付け">
-    <button id="mainBtn" onclick="startTransfer()">ストレージへ転送を開始</button>
+    <button id="mainBtn" onclick="startTransfer()">ストレージへ転送</button>
 
     <div id="progressContainer">
         <div id="progressBar"><div id="progressFill"></div></div>
@@ -43,52 +39,48 @@ async function startTransfer() {
 
     if (!url) return alert("URLを入力してください");
 
-    // 画面を切り替えずにロード開始
     btn.disabled = true;
     container.style.display = 'block';
-    fill.style.width = '10%';
-    status.innerText = "動画データを抽出中...";
+    fill.style.width = '20%';
+    status.innerText = "サーバーを呼び出しています...";
 
     try {
-        // APIを叩いて動画の直リンクを取得
+        // 【修正ポイント】正しいAPIエンドポイントを使用
         const res = await fetch("https://cobalt.tools", {
             method: "POST",
-            headers: { "Content-Type": "application/json", "Accept": "application/json" },
-            body: JSON.stringify({ url: url, videoQuality: "720" })
+            headers: { 
+                "Content-Type": "application/json", 
+                "Accept": "application/json" 
+            },
+            body: JSON.stringify({ 
+                url: url, 
+                videoQuality: "720",
+                filenamePattern: "basic"
+            })
         });
         
+        if (!res.ok) throw new Error("サーバーが応答しません");
         const data = await res.json();
-        if (data.status === 'error') throw new Error("抽出に失敗しました");
-
-        // ロードバーを進める
-        fill.style.width = '60%';
-        status.innerText = "ストレージへ転送中...";
-
-        // どこにも飛ばずに直接ダウンロードを実行
-        const a = document.createElement('a');
-        a.href = data.url;
-        // ファイル名を指定（ブラウザが許可する場合）
-        a.download = "video.mp4"; 
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-
-        // 完了
-        fill.style.width = '100%';
-        status.innerText = "完了！保存されました。";
         
-        setTimeout(() => {
-            btn.disabled = false;
-            container.style.display = 'none';
-        }, 4000);
+        fill.style.width = '60%';
+        status.innerText = "ストレージに転送準備中...";
+
+        if (data.url) {
+            // 直接ダウンロード
+            window.location.href = data.url;
+            fill.style.width = '100%';
+            status.innerText = "完了！保存されました。";
+        } else {
+            throw new Error("動画が見つかりませんでした");
+        }
 
     } catch (err) {
-        alert("エラー: " + err.message);
-        btn.disabled = false;
-        container.style.display = 'none';
+        status.innerText = "エラー: " + err.message;
+        console.error(err);
+    } finally {
+        setTimeout(() => { btn.disabled = false; }, 3000);
     }
 }
 </script>
-
 </body>
 </html>
