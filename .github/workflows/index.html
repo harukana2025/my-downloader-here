@@ -2,57 +2,93 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>YouTube ストレージ転送ツール</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube ストレージ転送機</title>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f4f4f9; }
-        .card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 450px; text-align: center; }
-        h1 { color: #ff0000; margin-bottom: 20px; }
-        input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 20px; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: #24292e; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        #progressBox { display: none; margin-top: 20px; }
-        #bar { width: 100%; background: #eee; height: 10px; border-radius: 5px; overflow: hidden; }
-        #fill { width: 0%; height: 100%; background: #ff0000; transition: 0.5s; }
-        #status { margin-top: 10px; font-size: 14px; color: #666; }
+        body { font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f0f2f5; }
+        .card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        h1 { color: #ff0000; font-size: 22px; margin-bottom: 25px; }
+        input { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 12px; margin-bottom: 20px; box-sizing: border-box; font-size: 16px; outline: none; }
+        input:focus { border-color: #ff0000; }
+        button { width: 100%; padding: 15px; background: #ff0000; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        
+        /* ロードバーのデザイン */
+        #progressContainer { display: none; margin-top: 30px; }
+        #progressBar { width: 100%; background: #f0f0f0; border-radius: 10px; height: 12px; overflow: hidden; }
+        #progressFill { width: 0%; height: 100%; background: linear-gradient(90deg, #ff0000, #ff6b6b); transition: width 0.4s ease; }
+        #status { margin-top: 12px; font-size: 14px; color: #666; font-weight: 500; }
     </style>
 </head>
 <body>
+
 <div class="card">
-    <h1>YouTube 抽出</h1>
-    <input type="text" id="url" placeholder="YouTube URLを入力">
-    <button id="btn" onclick="runTask()">抽出を開始してストレージに転送</button>
-    <div id="progressBox">
-        <div id="bar"><div id="fill"></div></div>
-        <div id="status">GitHub Actionsを起動中...</div>
+    <h1>YouTube 抽出ツール</h1>
+    <input type="text" id="urlInput" placeholder="動画のURLを貼り付け">
+    <button id="mainBtn" onclick="startTransfer()">ストレージへ転送を開始</button>
+
+    <div id="progressContainer">
+        <div id="progressBar"><div id="progressFill"></div></div>
+        <div id="status">解析中...</div>
     </div>
 </div>
 
 <script>
-async function runTask() {
-    const videoUrl = document.getElementById('url').value;
-    if(!videoUrl) return alert("URLを入力してください");
-
-    document.getElementById('btn').disabled = true;
-    document.getElementById('progressBox').style.display = 'block';
-    const fill = document.getElementById('fill');
+async function startTransfer() {
+    const url = document.getElementById('urlInput').value;
+    const btn = document.getElementById('mainBtn');
+    const container = document.getElementById('progressContainer');
+    const fill = document.getElementById('progressFill');
     const status = document.getElementById('status');
 
-    // 1. ロードバー開始 (GitHub Actionsの起動を待つ)
-    fill.style.width = "30%";
-    status.innerText = "サーバーで抽出処理を開始しました...";
+    if (!url) return alert("URLを入力してください");
 
-    // 本来はここでGitHub APIを叩きますが、今回は手動Actionsへの案内を挟みます
-    // ※API完全自動化にはPersonal Access Tokenが必要です
-    setTimeout(() => {
-        fill.style.width = "60%";
-        status.innerText = "動画を解析し、ストレージへ転送を準備中...";
-    }, 3000);
+    // 画面を切り替えずにロード開始
+    btn.disabled = true;
+    container.style.display = 'block';
+    fill.style.width = '10%';
+    status.innerText = "動画データを抽出中...";
 
-    setTimeout(() => {
-        fill.style.width = "100%";
-        status.innerText = "完了！リポジトリのCodeタブから保存してください。";
-        alert("抽出が完了しました！GitHubのCodeタブに動画が保存されます。");
-    }, 7000);
+    try {
+        // APIを叩いて動画の直リンクを取得
+        const res = await fetch("https://cobalt.tools", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify({ url: url, videoQuality: "720" })
+        });
+        
+        const data = await res.json();
+        if (data.status === 'error') throw new Error("抽出に失敗しました");
+
+        // ロードバーを進める
+        fill.style.width = '60%';
+        status.innerText = "ストレージへ転送中...";
+
+        // どこにも飛ばずに直接ダウンロードを実行
+        const a = document.createElement('a');
+        a.href = data.url;
+        // ファイル名を指定（ブラウザが許可する場合）
+        a.download = "video.mp4"; 
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        // 完了
+        fill.style.width = '100%';
+        status.innerText = "完了！保存されました。";
+        
+        setTimeout(() => {
+            btn.disabled = false;
+            container.style.display = 'none';
+        }, 4000);
+
+    } catch (err) {
+        alert("エラー: " + err.message);
+        btn.disabled = false;
+        container.style.display = 'none';
+    }
 }
 </script>
+
 </body>
 </html>
