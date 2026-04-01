@@ -1,32 +1,32 @@
-name: Node.js Downloader
+name: Node20 Downloader
 on:
-  workflow_dispatch: # 手動実行ボタン用
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'YouTube URL'
+        required: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      
     steps:
-      - name: コードを取得
-        uses: actions/checkout@v4
-
-      - name: Node.jsを準備
+      - uses: actions/checkout@v4
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: 必要な道具をインストール
-        run: npm install ytdl-core axios # 動画用とファイル用
-
-      - name: Node.jsを実行
-        run: node index.js # ここで index.js を呼び出します
-
-      - name: 保存したファイルをGitHubに書き戻す
+      - name: Install Tools
+        run: |
+          sudo curl -L https://github.com -o /usr/local/bin/yt-dlp
+          sudo chmod a+rx /usr/local/bin/yt-dlp
+      - name: Download
+        run: yt-dlp -f "best" "${{ github.event.inputs.url }}"
+      - name: Save to Storage
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add .
-          git commit -m "Node.jsでファイルを保存しました" || echo "変更なし"
+          git commit -m "Video Added" || echo "No changes"
           git push
