@@ -2,42 +2,40 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Node.js ダウンローダー</title>
+    <title>YouTube抽出ツール</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; background: #f4f4f9; }
-        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: inline-block; }
-        input { width: 300px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
-        button { padding: 10px 20px; background: #24292e; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px; }
-        button:hover { background: #444; }
-        .info { margin-top: 20px; color: #666; font-size: 0.9em; }
+        body { font-family: sans-serif; text-align: center; padding: 50px; background: #f0f2f5; }
+        .box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); display: inline-block; }
+        input { width: 350px; padding: 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 16px; }
+        button { padding: 12px 24px; background: #ff0000; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        button:hover { background: #cc0000; }
+        .steps { text-align: left; margin-top: 25px; font-size: 0.9em; color: #555; }
     </style>
 </head>
 <body>
-
-<div class="card">
-    <h1>GitHub保存ツール</h1>
-    <p>保存したいURLを入力してください</p>
-    <input type="text" id="urlInput" placeholder="https://example.com">
-    <button onclick="triggerAction()">GitHubで実行</button>
-    
-    <div class="info">
-        ※ボタンを押すとGitHub Actionsが起動し、<br>
-        数分後にリポジトリ内へファイルが保存されます。
+    <div class="box">
+        <h1>YouTube動画 抽出機</h1>
+        <input type="text" id="ytUrl" placeholder="https://youtube.com...">
+        <br>
+        <button onclick="copyAndGo()">抽出を開始する</button>
+        <div class="steps">
+            <p><strong>使い方:</strong></p>
+            <ol>
+                <li>URLを入力してボタンを押す（URLがコピーされます）</li>
+                <li>移動先のGitHubで「Run workflow」を押す</li>
+                <li>入力欄にURLを貼り付けて実行！</li>
+            </ol>
+        </div>
     </div>
-</div>
-
-<script>
-    function triggerAction() {
-        const url = document.getElementById('urlInput').value;
-        if (!url) return alert("URLを入力してください");
-
-        // 本来はGitHub APIを叩きますが、まずは手動運用のための案内を表示
-        alert("URLをコピーしました！\nGitHubの「Actions」タブから「Run workflow」を押し、\nこのURLを貼り付けて実行してください。");
-        
-        // 開発者向け：ここにGitHub API連携を書くと完全自動化できます
-        console.log("Target URL:", url);
-    }
-</script>
-
+    <script>
+        function copyAndGo() {
+            const url = document.getElementById('ytUrl').value;
+            if (!url) return alert("URLを入力してください");
+            navigator.clipboard.writeText(url).then(() => {
+                alert("URLをコピーしました！GitHubのActionsページへ移動します。");
+                window.open("https://github.com", "_blank");
+            });
+        }
+    </script>
 </body>
 </html>
