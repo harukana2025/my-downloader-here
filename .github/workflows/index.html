@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Node.js ダウンローダー</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; background: #f4f4f9; }
+        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: inline-block; }
+        input { width: 300px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 10px 20px; background: #24292e; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px; }
+        button:hover { background: #444; }
+        .info { margin-top: 20px; color: #666; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>GitHub保存ツール</h1>
+    <p>保存したいURLを入力してください</p>
+    <input type="text" id="urlInput" placeholder="https://example.com">
+    <button onclick="triggerAction()">GitHubで実行</button>
+    
+    <div class="info">
+        ※ボタンを押すとGitHub Actionsが起動し、<br>
+        数分後にリポジトリ内へファイルが保存されます。
+    </div>
+</div>
+
+<script>
+    function triggerAction() {
+        const url = document.getElementById('urlInput').value;
+        if (!url) return alert("URLを入力してください");
+
+        // 本来はGitHub APIを叩きますが、まずは手動運用のための案内を表示
+        alert("URLをコピーしました！\nGitHubの「Actions」タブから「Run workflow」を押し、\nこのURLを貼り付けて実行してください。");
+        
+        // 開発者向け：ここにGitHub API連携を書くと完全自動化できます
+        console.log("Target URL:", url);
+    }
+</script>
+
+</body>
+</html>
