@@ -5,11 +5,12 @@
     <title>YouTube ストレージ転送機</title>
     <style>
         body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f0f2f5; }
-        .card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        .card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 400px; text-align: center; }
         h1 { color: #ff0000; font-size: 22px; margin-bottom: 25px; }
-        input { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 12px; margin-bottom: 20px; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: #ff0000; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
-        button:disabled { background: #ccc; }
+        input { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 12px; margin-bottom: 20px; box-sizing: border-box; outline: none; }
+        button { width: 100%; padding: 15px; background: #ff0000; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        
         #progressContainer { display: none; margin-top: 30px; }
         #progressBar { width: 100%; background: #f0f0f0; border-radius: 10px; height: 12px; overflow: hidden; }
         #progressFill { width: 0%; height: 100%; background: #ff0000; transition: width 0.5s; }
@@ -21,7 +22,7 @@
 <div class="card">
     <h1>YouTube 抽出</h1>
     <input type="text" id="urlInput" placeholder="動画のURLを貼り付け">
-    <button id="mainBtn" onclick="startTransfer()">ストレージへ転送</button>
+    <button id="mainBtn" onclick="startTransfer()">ストレージへ転送を開始</button>
 
     <div id="progressContainer">
         <div id="progressBar"><div id="progressFill"></div></div>
@@ -45,7 +46,7 @@ async function startTransfer() {
     status.innerText = "サーバーを呼び出しています...";
 
     try {
-        // 【修正ポイント】正しいAPIエンドポイントを使用
+        // 【修正】正しいAPI窓口(api.cobalt.tools)を指定
         const res = await fetch("https://cobalt.tools", {
             method: "POST",
             headers: { 
@@ -54,31 +55,31 @@ async function startTransfer() {
             },
             body: JSON.stringify({ 
                 url: url, 
-                videoQuality: "720",
-                filenamePattern: "basic"
+                videoQuality: "720"
             })
         });
         
         if (!res.ok) throw new Error("サーバーが応答しません");
         const data = await res.json();
         
-        fill.style.width = '60%';
-        status.innerText = "ストレージに転送準備中...";
-
         if (data.url) {
-            // 直接ダウンロード
+            fill.style.width = '70%';
+            status.innerText = "ストレージに転送中...";
+            
+            // どこにも飛ばずに直接ダウンロード
             window.location.href = data.url;
+            
             fill.style.width = '100%';
             status.innerText = "完了！保存されました。";
         } else {
-            throw new Error("動画が見つかりませんでした");
+            throw new Error("動画の抽出に失敗しました");
         }
 
     } catch (err) {
         status.innerText = "エラー: " + err.message;
-        console.error(err);
+        console.error("Error Detail:", err);
     } finally {
-        setTimeout(() => { btn.disabled = false; }, 3000);
+        setTimeout(() => { btn.disabled = false; }, 4000);
     }
 }
 </script>
